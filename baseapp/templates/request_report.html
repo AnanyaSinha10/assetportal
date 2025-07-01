@@ -1,0 +1,138 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>IT Asset Request Report</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  table {
+      border-collapse: collapse;
+      width: 100%;
+  }
+  th, td {
+      border: 1px solid #e2e8f0; /* Tailwind's gray-200 */
+      padding: 8px;
+      text-align: left;
+  }
+  th {
+      background-color: #edf2f7; /* Tailwind's gray-200 */
+  }
+  /* Status tag styles for the report page */
+  .status-tag {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: white;
+      text-transform: capitalize;
+  }
+  .status-pending { background-color: #f59e0b; }
+  .status-approved { background-color: #10b981; }
+  .status-rejected { background-color: #ef4444; }
+  .status-duplicate { background-color: #8b5cf6; }
+</style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+<nav class="bg-blue-600 p-4 flex justify-between items-center">
+  <h1 class="text-white font-bold text-xl">IT Asset Request Report</h1>
+  <a href="{% url 'home' %}" class="text-white hover:underline">Back to Home</a>
+</nav>
+
+<div class="max-w-7xl mx-auto p-6 mt-6 bg-white rounded-lg shadow">
+  <h2 class="text-2xl font-bold text-gray-800 mb-4">View All Requests</h2>
+
+  <form method="GET" class="mb-6 flex items-end space-x-4">
+    <div>
+      <label for="{{ form.financial_year.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.financial_year.label }}</label>
+      {{ form.financial_year }}
+    </div>
+    <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded h-fit">Filter Report</button>
+  </form>
+
+  {% if requests %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Location</th>
+            <th>Department</th>
+            <th>Financial Year</th>
+            <th>Asset Type</th>
+            <th>Description</th>
+            <th>Estimated Cost</th>
+            <th>Item Type</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Remarks</th> {# NEW COLUMN HEADER #}
+            <th>Indent</th>
+            <th>Annexure X</th>
+            <th>Annexure Y</th>
+            <th>GEM File</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for req in requests %}
+            <tr>
+              <td>{{ req.id }}</td>
+              <td>{{ req.location.name }}</td>
+              <td>{{ req.department.name }}</td>
+              <td>{{ req.financial_year }}</td>
+              <td>{{ req.asset_type.name }}</td>
+              <td>{{ req.description|default:"N/A" }}</td>
+              <td>INR {{ req.estimated_cost|floatformat:2 }}</td>
+              <td>{{ req.get_item_type_display }}</td>
+              <td>{{ req.date|date:"Y-m-d" }}</td>
+              <td>
+                <span class="status-tag status-{{ req.status }}">
+                    {{ req.get_status_display }}
+                </span>
+              </td>
+              <td>{{ req.remarks|default:"N/A" }}</td> {# NEW: Display remarks #}
+              <td>
+                {% if req.indent_file %}
+                  <a href="{{ req.indent_file.url }}" target="_blank" class="text-blue-600 hover:underline">View</a>
+                {% else %}
+                  N/A
+                {% endif %}
+              </td>
+              <td>
+                {% if req.annexure_x %}
+                  <a href="{{ req.annexure_x.url }}" target="_blank" class="text-blue-600 hover:underline">View</a>
+                {% else %}
+                  N/A
+                {% endif %}
+              </td>
+              <td>
+                {% if req.annexure_y %}
+                  <a href="{{ req.annexure_y.url }}" target="_blank" class="text-blue-600 hover:underline">View</a>
+                {% else %}
+                  N/A
+                {% endif %}
+              </td>
+              <td>
+                {% if req.gem_file %}
+                  <a href="{{ req.gem_file.url }}" target="_blank" class="text-blue-600 hover:underline">View</a>
+                {% else %}
+                  N/A
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-gray-600">No IT asset requests found for the selected criteria.</p>
+  {% endif %}
+
+  <div class="mt-8 pt-4 border-t border-gray-200 flex justify-end">
+    <a href="{% url 'home' %}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Back to Home</a>
+  </div>
+</div>
+
+</body>
+</html>

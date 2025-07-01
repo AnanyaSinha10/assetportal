@@ -1,0 +1,214 @@
+{% load static %}
+{# REMOVED: {% load my_filters %} #}
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>IT Asset Survey</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Add some basic table styling for better readability if needed */
+    table {
+        border-collapse: collapse;
+    }
+    th, td {
+        border: 1px solid #e2e8f0; /* Tailwind's gray-200 */
+        padding: 8px;
+        text-align: left;
+    }
+    .sticky-header-row { /* For the top header row (Model Names) */
+        position: sticky;
+        top: 0;
+        background-color: white; /* Ensure it's visible over content */
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Optional shadow for better separation */
+    }
+    .sticky-col-dept { /* For the first column (Department Names) */
+        position: sticky;
+        left: 0;
+        background-color: white; /* Ensure it's visible */
+        z-index: 9; /* Lower z-index than sticky-header but higher than regular cells */
+    }
+    .sticky-corner { /* For the very top-left corner cell */
+        position: sticky;
+        left: 0;
+        top: 0;
+        background-color: #edf2f7; /* Tailwind's gray-200 */
+        z-index: 11; /* Highest z-index for corner */
+        box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+    }
+    .total-cell {
+        font-weight: bold;
+        text-align: center;
+        background-color: #fefcbf; /* Tailwind yellow-100 */
+    }
+    .grand-total-cell {
+        background-color: #d1fae5; /* Tailwind green-100 */
+    }
+  </style>
+</head>
+<body class="bg-gray-100 p-6 font-sans">
+
+<nav class="bg-blue-600 p-4 flex justify-between items-center">
+  <h1 class="text-white font-bold text-xl">IT Asset Survey</h1>
+  <a href="{% url 'home' %}" class="text-white hover:underline">Back to Home</a>
+</nav>
+
+<div class="max-w-7xl mx-auto p-6 mt-6 bg-white rounded-lg shadow"> {# Increased max-w for wider table #}
+  <h2 class="text-2xl font-bold mb-4">IT Asset Survey</h2>
+
+  <form method="GET" class="space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4"> {# Use grid for better layout #}
+      <div>
+        <label for="{{ form.location.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.location.label }}</label>
+        {{ form.location }}
+      </div>
+      <div>
+        <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.category.label }}</label>
+        {{ form.category }}
+      </div>
+      <div>
+        <label for="{{ form.date.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.date.label }}</label>
+        {{ form.date }}
+      </div>
+      <div>
+        <label for="{{ form.financial_year.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.financial_year.label }}</label>
+        {{ form.financial_year }}
+      </div>
+    </div>
+    <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded">Load Models</button>
+  </form>
+
+  {% if unique_model_names and table_data %} {# Check for unique_model_names and table_data #}
+  <hr class="my-6">
+  <h3 class="text-lg font-bold mb-4">Survey for {{ selected_location.name }} - {{ selected_category.name }} on {{ selected_date|date:"Y-m-d" }} (FY: {{ selected_financial_year }})</h3>
+
+  <form method="POST" id="surveyForm" class="mt-6 overflow-x-auto"> {# Added overflow-x-auto for horizontal scroll #}
+    {% csrf_token %}
+    <input type="hidden" name="location" value="{{ selected_location.id }}">
+    <input type="hidden" name="category" value="{{ selected_category.id }}">
+    <input type="hidden" name="date" value="{{ selected_date|date:"Y-m-d" }}">
+    <input type="hidden" name="financial_year" value="{{ selected_financial_year }}">
+
+    <table class="w-full text-sm">
+      <thead class="sticky-header-row">
+        <tr>
+          <th class="sticky-corner bg-gray-200">Department Name</th> {# Corner Cell #}
+          {% for model_name in unique_model_names %} {# Loop through unique model names #}
+            <th class="bg-gray-200" data-model-name="{{ model_name }}">{{ model_name }}</th> {# Use model_name as data attribute for JS #}
+          {% endfor %}
+          <th class="bg-gray-200">Department Total</th> {# Column for Department Row Totals #}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in table_data %} {# Iterate through pre-processed rows #}
+          <tr data-dept-id="{{ row.dept.id }}">
+            <td class="sticky-col-dept bg-white font-medium">{{ row.dept.name }}</td> {# Department Name Column #}
+            {% for cell in row.cells %} {# Iterate through cells in this row #}
+              {% if cell.type == 'input' %}
+                <td class="text-center">
+                  <input type="number"
+                         name="count_{{ cell.model_instance.id }}_{{ cell.dept.id }}" {# Use specific instance's ID and department ID #}
+                         min="0" value="0"
+                         class="count-input w-20 border rounded p-1 text-center"
+                         data-model-instance-id="{{ cell.model_instance.id }}" {# Use instance ID for JS #}
+                         data-model-name="{{ cell.model_instance.name }}" {# Also pass model name to input for JS #}
+                         data-dept-id="{{ cell.dept.id }}">
+                </td>
+              {% else %} {# cell.type == 'hyphen' #}
+                <td class="bg-gray-50 text-gray-400 text-center">-</td>
+              {% endif %}
+            {% endfor %}
+            <td class="dept-row-total total-cell" data-dept-id="{{ row.dept.id }}">0</td> {# Cell for Department Row Total #}
+          </tr>
+        {% endfor %}
+        {# Row for Model Column Totals #}
+        <tr>
+          <td class="sticky-col-dept bg-gray-200 font-bold">Model Total</td>
+          {% for model_name in unique_model_names %}
+            <td class="model-col-total total-cell" data-model-name="{{ model_name }}">0</td> {# Use model_name for JS lookup #}
+          {% endfor %}
+          <td class="grand-total-cell total-cell">0</td> {# Cell for Grand Total #}
+        </tr>
+      </tbody>
+    </table>
+
+    <button type="submit" class="mt-4 bg-green-600 text-white px-4 py-2 rounded">Submit Survey</button>
+  </form>
+  {% elif request.GET.location and request.GET.category %}
+      <p class="mt-6 text-gray-600">No models found for the selected location and category. Please ensure models are linked to the selected location and category.</p>
+  {% else %}
+      <p class="mt-6 text-gray-600">Please select a location, category, and financial year and click "Load Models" to begin the survey.</p>
+  {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const surveyForm = document.getElementById('surveyForm');
+    if (!surveyForm) return;
+
+    const countInputs = surveyForm.querySelectorAll('.count-input');
+    const deptRowTotalCells = surveyForm.querySelectorAll('.dept-row-total');
+    const modelColTotalCells = surveyForm.querySelectorAll('.model-col-total');
+    const grandTotalCell = surveyForm.querySelector('.grand-total-cell');
+
+    function calculateTotals() {
+        const deptTotals = {};
+        const modelNameTotals = {};
+        let grandTotal = 0;
+
+        // Initialize department row totals
+        deptRowTotalCells.forEach(cell => {
+            const deptId = cell.dataset.deptId;
+            deptTotals[deptId] = 0;
+        });
+
+        // Initialize model column totals (using model_name from the header for columns)
+        surveyForm.querySelectorAll('thead th[data-model-name]').forEach(th => {
+            const modelName = th.dataset.modelName;
+            modelNameTotals[modelName] = 0;
+        });
+
+
+        countInputs.forEach(input => {
+            const modelName = input.dataset.modelName;
+            const deptId = input.dataset.deptId;
+            const count = parseInt(input.value) || 0;
+
+            if (deptTotals[deptId] !== undefined) {
+                deptTotals[deptId] += count;
+            }
+
+            if (modelNameTotals[modelName] !== undefined) {
+                modelNameTotals[modelName] += count;
+            }
+
+            grandTotal += count;
+        });
+
+        // Update Department Row Totals
+        deptRowTotalCells.forEach(cell => {
+            const deptId = cell.dataset.deptId;
+            cell.textContent = deptTotals[deptId];
+        });
+
+        // Update Model Column Totals
+        modelColTotalCells.forEach(cell => {
+            const modelName = cell.dataset.modelName;
+            cell.textContent = modelNameTotals[modelName];
+        });
+
+        // Update Grand Total
+        grandTotalCell.textContent = grandTotal;
+    }
+
+    countInputs.forEach(input => {
+        input.addEventListener('input', calculateTotals);
+    });
+
+    calculateTotals();
+});
+</script>
+
+</body>
+</html>

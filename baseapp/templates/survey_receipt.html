@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Survey Receipt</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Optional: Basic styling for a success message */
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.25rem;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-6">
+
+<div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
+    <h2 class="text-xl font-bold mb-4">Survey Submission Receipt</h2>
+
+    {# Display a simple success message #}
+    <div class="success-message">
+        Survey submitted successfully!
+        {% if survey_info %}
+            <p class="mt-2 text-sm">For Location: {{ survey_info.location.name }}, Category: {{ survey_info.category.name }} on {{ survey_info.date|date:"F j, Y" }} (FY: {{ survey_info.financial_year }})</p>
+        {% else %}
+            <p class="mt-2 text-sm">Thank you for your submission.</p>
+        {% endif %}
+    </div>
+
+    {# You can remove the complex table display logic for now #}
+    {# The server logs indicated the data was saving, so this focuses on UI #}
+    <p class="text-gray-600 mb-4">Your survey information and entries have been recorded.</p>
+
+
+    <div class="mt-6">
+        <a href="{% url 'survey_form' %}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Start New Survey</a>
+        <a href="{% url 'home' %}" class="ml-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Go to Home</a>
+    </div>
+</div>
+
+</body>
+</html>

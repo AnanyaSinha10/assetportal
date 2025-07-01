@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Submit IT Asset Request</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  .error { color: #e53e3e; font-size: 0.9rem; }
+</style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+<nav class="bg-blue-600 p-4 flex justify-between items-center">
+  <h1 class="text-white font-bold text-xl">IT Asset Request</h1>
+  <a href="{% url 'home' %}" class="text-white hover:underline">Back to Home</a>
+</nav>
+
+<div class="max-w-3xl mx-auto p-6 mt-6 bg-white rounded-lg shadow">
+  <h2 class="text-2xl font-bold text-gray-800">Submit New Request</h2>
+  <form id="requestForm" method="POST" enctype="multipart/form-data" class="mt-4 space-y-4">
+    {% csrf_token %}
+
+    <!-- Location Dropdown -->
+    <div>
+      <label class="block text-gray-700 font-medium">Location <span class="text-red-500">*</span></label>
+      <select name="location" required class="mt-1 block w-full rounded border-gray-300 p-2">
+        <option value="">Select a location</option>
+        {% for loc in locations %}
+        <option value="{{ loc.id }}">{{ loc.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Department Dropdown -->
+    <div>
+      <label class="block text-gray-700 font-medium">Department <span class="text-red-500">*</span></label>
+      <select name="department" required class="mt-1 block w-full rounded border-gray-300 p-2">
+        <option value="">Select a department</option>
+        {% for dept in departments %}
+        <option value="{{ dept.id }}">{{ dept.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Financial Year Dropdown -->
+    <div>
+      <label class="block text-gray-700 font-medium">Financial Year <span class="text-red-500">*</span></label>
+      <select name="financial_year" required class="mt-1 block w-full rounded border-gray-300 p-2">
+        {% for year in financial_years %}
+        <option value="{{ year }}">{{ year }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Type of Asset Dropdown -->
+    <div>
+      <label class="block text-gray-700 font-medium">Type of Asset <span class="text-red-500">*</span></label>
+      <select name="asset_type" required class="mt-1 block w-full rounded border-gray-300 p-2">
+        {% for a_type in asset_types %}
+        <option value="{{ a_type.id }}">{{ a_type.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Brief Description -->
+    <div>
+      <label class="block text-gray-700 font-medium">Brief Description of Item (Optional)</label>
+      <textarea name="description" class="mt-1 block w-full rounded border-gray-300 p-2" rows="3"></textarea>
+    </div>
+
+    <!-- Estimated Cost -->
+    <div>
+      <label class="block text-gray-700 font-medium">Estimated Cost (INR) <span class="text-red-500">*</span></label>
+      <input type="number" name="estimated_cost" required class="mt-1 block w-full rounded border-gray-300 p-2" placeholder="Enter estimated cost">
+    </div>
+
+    <!-- Item Type -->
+    <div>
+      <label class="block text-gray-700 font-medium">Item Type <span class="text-red-500">*</span></label>
+      <select name="item_type" required class="mt-1 block w-full rounded border-gray-300 p-2">
+        <option value="capital">Capital</option>
+        <option value="revenue">Revenue</option>
+      </select>
+    </div>
+
+    <!-- Date -->
+    <div>
+      <label class="block text-gray-700 font-medium">Date of Request <span class="text-red-500">*</span></label>
+      <input type="date" name="date" value="{{ today }}" required class="mt-1 block w-full rounded border-gray-300 p-2">
+    </div>
+
+    <!-- File Uploads -->
+    <div>
+      <label class="block text-gray-700 font-medium">Indent Document</label>
+      <input type="file" name="indent_file" class="mt-1 block w-full rounded border-gray-300 p-2">
+    </div>
+    <div>
+      <label class="block text-gray-700 font-medium">Annexure X</label>
+      <input type="file" name="annexure_x" class="mt-1 block w-full rounded border-gray-300 p-2">
+    </div>
+    <div>
+      <label class="block text-gray-700 font-medium">Annexure Y</label>
+      <input type="file" name="annexure_y" class="mt-1 block w-full rounded border-gray-300 p-2">
+    </div>
+    <div>
+      <label class="block text-gray-700 font-medium">GEM Product Details</label>
+      <input type="file" name="gem_file" class="mt-1 block w-full rounded border-gray-300 p-2">
+    </div>
+
+    <!-- Submit Button -->
+    <div class="pt-4">
+      <button type="submit" class="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 w-full">Submit Request</button>
+    </div>
+  </form>
+</div>
+
+<!-- JS Validation Script -->
+<script>
+  document.getElementById('requestForm').addEventListener('submit', function(event) {
+    const requiredFields = this.querySelectorAll('[required]');
+    let isValid = true;
+
+    requiredFields.forEach(field => {
+      if (!field.value.trim()) {
+        isValid = false;
+      }
+    });
+
+    if (!isValid) {
+      alert("Please fill out all required fields before submitting.");
+      event.preventDefault();
+    }
+  });
+</script>
+
+</body>
+</html>

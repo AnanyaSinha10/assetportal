@@ -1,0 +1,131 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Review Asset Requests</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #e2e8f0; /* Tailwind's gray-200 */
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #edf2f7; /* Tailwind's gray-200 */
+        }
+        .status-tag {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: white;
+            text-transform: capitalize; /* Make 'pending' appear as 'Pending' */
+        }
+        .status-pending { background-color: #f59e0b; } /* amber-500 */
+        .status-approved { background-color: #10b981; } /* emerald-500 */
+        .status-rejected { background-color: #ef4444; } /* red-500 */
+        .status-duplicate { background-color: #8b5cf6; } /* violet-500 */
+        /* Style for remarks textarea */
+        .remarks-textarea {
+            width: 100%;
+            min-height: 40px; /* Adjust as needed */
+            padding: 4px;
+            border: 1px solid #d1d5db; /* gray-300 */
+            border-radius: 4px;
+            font-size: 0.875rem; /* text-sm */
+            resize: vertical; /* Allow vertical resizing */
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+<nav class="bg-blue-600 p-4 flex justify-between items-center">
+    <h1 class="text-white font-bold text-xl">Review Pending Asset Requests</h1>
+    <a href="{% url 'home' %}" class="text-white hover:underline">Back to Home</a>
+</nav>
+
+<div class="max-w-7xl mx-auto p-6 mt-6 bg-white rounded-lg shadow">
+    <h2 class="text-2xl font-bold text-gray-800 mb-4">Pending Requests</h2>
+
+    {% if pending_requests %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Date</th>
+                        <th>Location</th>
+                        <th>Department</th>
+                        <th>Financial Year</th>
+                        <th>Asset Type</th>
+                        <th>Description</th>
+                        <th>Cost</th>
+                        <th>Item Type</th>
+                        <th>Indent</th>
+                        <th>Status</th>
+                        <th>Remarks (for Approver)</th> {# NEW COLUMN HEADER #}
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request_item in pending_requests %}
+                        <tr>
+                            <td>{{ request_item.id }}</td>
+                            <td>{{ request_item.date|date:"Y-m-d" }}</td>
+                            <td>{{ request_item.location.name }}</td>
+                            <td>{{ request_item.department.name }}</td>
+                            <td>{{ request_item.financial_year }}</td>
+                            <td>{{ request_item.asset_type.name }}</td>
+                            <td>{{ request_item.description|default:"N/A" }}</td>
+                            <td>INR {{ request_item.estimated_cost|floatformat:2 }}</td>
+                            <td>{{ request_item.get_item_type_display }}</td>
+                            <td>
+                                {% if request_item.indent_file %}
+                                    <a href="{{ request_item.indent_file.url }}" target="_blank" class="text-blue-600 hover:underline">View</a>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="status-tag status-{{ request_item.status }}">
+                                    {{ request_item.get_status_display }}
+                                </span>
+                            </td>
+                            <td> {# NEW COLUMN FOR REMARKS INPUT #}
+                                {# Each form needs a unique ID for the 'form' attribute to work with textarea #}
+                                <textarea name="remarks_field" form="action_form_{{ request_item.id }}"
+                                          class="remarks-textarea" placeholder="Add remarks..."></textarea>
+                            </td>
+                            <td>
+                                {# Wrap action buttons in their own form with a unique ID #}
+                                <form method="POST" action="{% url 'review_requests' %}" id="action_form_{{ request_item.id }}" class="inline-block">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="request_id" value="{{ request_item.id }}">
+                                    <button type="submit" name="action" value="approve" class="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600 w-full mb-1">Approve</button>
+                                    <button type="submit" name="action" value="reject" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 w-full mb-1">Reject</button>
+                                    <button type="submit" name="action" value="mark_duplicate" class="bg-violet-500 text-white px-2 py-1 rounded text-xs hover:bg-violet-600 w-full">Mark Duplicate</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-gray-600">No pending asset requests to review.</p>
+    {% endif %}
+
+    <div class="mt-8 pt-4 border-t border-gray-200 flex justify-end">
+        <a href="{% url 'home' %}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Back to Home</a>
+    </div>
+</div>
+
+</body>
+</html>
